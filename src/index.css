@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Layout: a light sidebar of sections beside one study column; one lapis accent; gender as the only other color. */
+:root {
+  --bg: 246 247 250; --surface: 255 255 255; --sunken: 240 242 246; --ink: 30 37 52; --muted: 92 103 124; --line: 226 230 237;
+  --accent: 64 92 205; --accent-soft: 234 238 251; --accent-ink: 255 255 255;
+  --good: 30 128 86; --good-soft: 228 243 236; --bad: 192 72 46; --bad-soft: 250 236 232;
+  --warm: 214 120 52; --warm-soft: 252 240 229; --hl: 252 231 150;
+  --gf: 206 98 50; --gm: 52 120 190; --gn: 44 146 92;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: 21 24 31; --surface: 29 33 42; --sunken: 36 41 52; --ink: 232 235 241; --muted: 160 168 184; --line: 50 56 70;
+    --accent: 140 164 245; --accent-soft: 43 51 78; --accent-ink: 18 22 34;
+    --good: 104 200 152; --good-soft: 28 51 41; --bad: 240 138 116; --bad-soft: 64 35 30;
+    --warm: 240 160 96; --warm-soft: 62 44 30; --hl: 120 98 30;
+    --gf: 240 140 96; --gm: 120 172 236; --gn: 110 198 146;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: 21 24 31; --surface: 29 33 42; --sunken: 36 41 52; --ink: 232 235 241; --muted: 160 168 184; --line: 50 56 70;
+  --accent: 140 164 245; --accent-soft: 43 51 78; --accent-ink: 18 22 34;
+  --good: 104 200 152; --good-soft: 28 51 41; --bad: 240 138 116; --bad-soft: 64 35 30;
+  --warm: 240 160 96; --warm-soft: 62 44 30; --hl: 120 98 30;
+  --gf: 240 140 96; --gm: 120 172 236; --gn: 110 198 146;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body { background: rgb(var(--bg)); color: rgb(var(--ink)); font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 6px; }
+input, textarea, select, button { font: inherit; color: inherit; }
+.tabular { font-variant-numeric: tabular-nums; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+.card-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }

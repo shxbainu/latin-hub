@@ -1,0 +1,14 @@
+import { applyPlacement, placementItems, SET, dueItems, endOfToday, allItems, readiness, prepItems } from '../src/model.js';
+const docs = { earlier: { v2: { cards: {} } }, l45: { v2: { cards: {} } }, lessons: { v2: { cards: {} } }, hub: { days: {}, mistakes: [], cards: {} }, grammar: { stats: {} } };
+const store = { get: (n) => docs[n], update: (n, fn) => { fn(docs[n]); docs[n].t = Date.now(); } };
+const items = placementItems(store, [1, 2, 3, 47], 2);
+console.log('items', items.length, items.map(i => i.card.id).join(' '));
+const res = { 1: [{ id: items[0].card.id, ok: true }, { id: items[1].card.id, ok: true }], 2: [{ id: items[2].card.id, ok: true }, { id: items[3].card.id, ok: false }, { id: 'x', ok: true }], 3: [{ id: items[4].card.id, ok: false }, { id: items[5].card.id, ok: false }], 47: [{ id: items[6].card.id, ok: true }, { id: items[7].card.id, ok: true }] };
+console.log(applyPlacement(store, res));
+const c = docs.lessons.v2.cards;
+console.log('seeded', Object.keys(c).length, '| L1 learned', SET.L1.cards.filter(x => docs.lessons.learned[x.id]).length, '/', SET.L1.cards.length, '| L3 learned', SET.L3.cards.filter(x => docs.lessons.learned[x.id]).length);
+const L2miss = c[items[3].card.id + '|le']; console.log('missed word in shaky lesson:', L2miss.state, Math.round((L2miss.due - Date.now()) / 60000), 'min');
+const dues = Object.values(c).map(x => (x.due - Date.now()) / 864e5); console.log('due range days', Math.min(...dues).toFixed(2), Math.max(...dues).toFixed(2));
+const due = dueItems(store, endOfToday()); console.log('due today after placement:', due.length, 'kinds', [...new Set(due.map(d => d.kind))]);
+console.log('readiness L47-48', readiness(store, [47, 48], Date.now() + 3 * 864e5));
+console.log('prep items for test', prepItems(store, { lessons: [47, 48], topics: ['clause', 'subj'], date: '2026-11-18' }).map(i => i.kind).join(','));

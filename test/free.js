@@ -1,0 +1,37 @@
+import { freePool, freeCounts, freeBatch, FREE_DEFAULT, grade, SET } from '../src/model.js';
+const docs = { earlier: { v2: { cards: {} } }, l45: { v2: { cards: {} } }, lessons: { v2: { cards: {} } }, hub: { days: {}, mistakes: [], cards: {} }, grammar: { stats: {} } };
+const store = { get: (n) => docs[n], update: (n, fn) => { fn(docs[n]); docs[n].t = Date.now(); } };
+let bad = 0; const ok = (c, m) => { console.log(c ? 'ok  ' : 'FAIL', m); if (!c) bad++; };
+// nothing learned yet: free practice still has words
+const cfg = { ...FREE_DEFAULT, lessons: [45, 46], dir: 'le', n: 'all' };
+const pool = freePool(store, cfg);
+ok(pool.length === 22, 'L45-46 pool has all 22 words, none learned (' + pool.length + ')');
+ok(freePool(store, { ...cfg, unlearned: false }).length === 0, 'learned-only pool is empty when nothing is learned');
+const c = freeCounts(cfg, pool.length);
+const items = freeBatch(store, cfg, c.v, c.g);
+ok(items.length === 22 && items.every((i) => i.kind === 'le'), 'Latin→English: 22 le items');
+ok(freeBatch(store, { ...cfg, dir: 'el' }, 22, 0).every((i) => i.kind === 'el'), 'English→Latin: all el');
+const mixed = freeBatch(store, { ...cfg, dir: 'mixed' }, 22, 0);
+ok(new Set(mixed.map((i) => i.kind)).size >= 3, 'mixed has several kinds: ' + [...new Set(mixed.map((i) => i.kind))]);
+const fm = freeBatch(store, { ...cfg, dir: 'fm' }, 22, 0);
+ok(fm.every((i) => i.kind === 'fm' || i.kind === 'el'), 'forms & gender: fm (or el for one-form words)');
+const g = freeBatch(store, { ...cfg, topics: ['decl', 'subj'], n: 20 }, 14, 6);
+ok(g.filter((i) => i.kind === 'gram').length === 6 && g.length === 20, 'grammar mixed in: 6 gram of 20');
+ok(freeCounts({ ...cfg, n: 20 }, 22).v === 20 && freeCounts({ ...cfg, n: 50 }, 22).v === 22, 'counts cap at pool size');
+ok(freeCounts({ ...cfg, n: 20, topics: ['decl'] }, 22).g === 6, '30% grammar share');
+ok(freeCounts({ ...cfg, n: 'endless' }, 22).batch === true, 'endless is batched');
+// schedule untouched by default
+const it = items.find((i) => i.card.id === 'impero') || items[0];
+ok(it.noSrs === true, 'default: noSrs');
+const before = JSON.stringify(docs);
+grade(store, { ...it }, 3);
+const after = JSON.parse(JSON.stringify(docs));
+ok(Object.keys(after.l45.v2.cards).length === 0 && !after.l45.learned, 'answering does not create a card or mark the word learned');
+ok(after.hub.days[Object.keys(after.hub.days)[0]] === 1, 'but the daily count still ticks');
+// tracking on: unlearned word still not scheduled, learned word is
+docs.l45.learned = { impero: 1 }; docs.l45.v2.cards['impero|le'] = { S: 3, D: 5, due: 0, reps: 2, lapses: 0, last: 1, lastGrade: 3, state: 'review', h: [3, 3] };
+const t = freeBatch(store, { ...cfg, track: true }, 22, 0);
+const imp = t.find((i) => i.card.id === 'impero'), other = t.find((i) => i.card.id !== 'impero');
+ok(imp.noSrs === false && other.noSrs === true, 'track on: learned word counts, unlearned word does not');
+const reps = docs.l45.v2.cards['impero|le'].reps; grade(store, { ...imp }, 3); ok(docs.l45.v2.cards['impero|le'].reps === reps + 1, 'tracked answer updates the schedule');
+process.exit(bad ? 1 : 0);

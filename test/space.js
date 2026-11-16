@@ -1,0 +1,10 @@
+import { matchEnglish } from '../src/model.js';
+const t = (i, m, want) => { const r = matchEnglish(i, m, true, []).ok; console.log(r === want ? 'ok  ' : 'FAIL', JSON.stringify(i), '->', r); if (r !== want) process.exitCode = 1; };
+t('command order', 'order, command', true);
+t('order command', 'order, command', true);
+t('order and command', 'order, command', true);
+t('order, command', 'order, command', true);
+t('command', 'order, command', true);
+t('command banana', 'order, command', false);
+t('give orders', 'give orders, command', true);
+t('sad', 'order, command', false);
