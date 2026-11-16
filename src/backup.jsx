@@ -3,6 +3,8 @@ import { Download, Copy, Check, Undo2 } from 'lucide-react';
 import { Btn, Panel, cx } from './ui.jsx';
 import { DOC_LABEL, summarize } from './store.js';
 
+// Claude's page can't hand out files, so there the copy button is the way; the website gets both.
+const inClaude = typeof window !== 'undefined' && !!(window.claude && window.claude.use);
 const when = (t) => (t ? new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'never');
 
 export function Backup({ store }) {
@@ -70,8 +72,8 @@ export function Backup({ store }) {
           ))}
         </dl>
         <div className="flex flex-wrap items-center gap-2.5">
-          <Btn variant="primary" onClick={download}><Download size={16} />Download backup file</Btn>
-          <Btn onClick={copy}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? 'Copied' : 'Copy backup text'}</Btn>
+          {!inClaude && <Btn variant="primary" onClick={download}><Download size={16} />Download backup file</Btn>}
+          <Btn variant={inClaude ? 'primary' : 'secondary'} onClick={copy}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? 'Copied' : 'Copy backup text'}</Btn>
         </div>
         {shown && (
           <div className="flex flex-col gap-1.5">
