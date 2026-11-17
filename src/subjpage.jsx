@@ -237,7 +237,7 @@ export function Subjunctive({ store, embedded }) {
           <h1 className="font-serif text-[40px] font-medium leading-none tracking-tight">Subjunctive</h1>
         </header>
       )}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_460px]">
         <div className="flex min-w-0 flex-col gap-5">
           <div className="flex flex-col gap-2.5">
             {SETTINGS.map(([label, k, opts]) => (

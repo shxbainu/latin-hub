@@ -137,7 +137,7 @@ function App() {
   const key = hashOf(route);
   return (
     <MotionConfig reducedMotion="user">
-      <div className="mx-auto flex min-h-screen max-w-[1240px] flex-col md:flex-row">
+      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col md:flex-row">
         <aside className="gutter flex flex-col gap-4 border-b border-line py-4 md:sticky md:top-0 md:h-screen md:w-[248px] md:shrink-0 md:border-b-0 md:border-r md:py-7">
           <div className="flex items-center gap-2.5 px-1">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent font-serif text-xl font-semibold text-accent-ink">J</span>
