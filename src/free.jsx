@@ -9,7 +9,7 @@ import { lessonText } from './mock.jsx';
 import { GROUPS } from './grammar.jsx';
 
 // A small underlined choice, like the grammar page's "One form / Whole table".
-function Choice({ id, value, onChange, options, label }) {
+export function Choice({ id, value, onChange, options, label }) {
   return (
     <div role="radiogroup" aria-label={label} className="flex flex-wrap items-baseline gap-x-4 gap-y-2 text-[15px]">
       {options.map(([k, l]) => (
@@ -23,7 +23,7 @@ function Choice({ id, value, onChange, options, label }) {
   );
 }
 
-function Legend({ num, children, aside }) {
+export function Legend({ num, children, aside }) {
   return (
     <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-1.5">
       <p className="flex items-baseline gap-2">

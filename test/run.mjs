@@ -4,7 +4,7 @@ import { execFileSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 
-const files = ['model.test.js', 'place.test.js', 'free.js', 'space.js'];
+const files = ['model.test.js', 'place.test.js', 'free.js', 'space.js', 'subj.js'];
 let failed = 0;
 for (const f of files) {
   const out = path.join(os.tmpdir(), 'jlh-' + f + '.mjs');
