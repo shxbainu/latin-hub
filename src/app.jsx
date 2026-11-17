@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
-import { Sun, BookOpen, Table2, Target, Timer, ChevronDown, Cloud, CloudOff, Check, CalendarDays, Shuffle, Feather } from 'lucide-react';
+import { Sun, BookOpen, Table2, Target, Timer, ChevronDown, Cloud, CloudOff, Check, CalendarDays, Shuffle } from 'lucide-react';
 import { cx, EASE, SPRING } from './ui.jsx';
 import { createStore } from './store.js';
 import { SETS, SET, REVIEWS, ASSESS, dueCount, troubleWords, isLearned, TOPICS, topicPct } from './model.js';
@@ -15,7 +15,6 @@ import { Trouble } from './trouble.jsx';
 import { Mock } from './mock.jsx';
 import { Free } from './free.jsx';
 import { Backup } from './backup.jsx';
-import { Subjunctive } from './subjpage.jsx';
 
 const store = createStore();
 // A unit is what a word page studies: one lesson (L7), a review unit (R3), or an assessment's lessons (a:vq-4546).
@@ -26,7 +25,7 @@ export function unitOf(key) {
   if (key.startsWith('a:')) { const a = ASSESS.find((x) => x.id === key.slice(2)); return a && a.lessons.length && { key, title: a.title, sub: 'Lessons ' + lessonText(a.lessons), sets: a.lessons.map((n) => SET['L' + n]).filter(Boolean) }; }
   return null;
 }
-const PAGES = ['today', 'course', 'lessons', 'free', 'grammar', 'subj', 'trouble', 'mock', 'backup'];
+const PAGES = ['today', 'course', 'lessons', 'free', 'grammar', 'trouble', 'mock', 'backup'];
 const OLD_HASH = { 'l45-46': 'a:vq-4546', earlier: 'a:vq-4244' };
 function hashOf(r) {
   if (r.page !== 'set') return r.page;
@@ -35,6 +34,7 @@ function hashOf(r) {
 }
 function parseHash(h) {
   if (!h) return null;
+  if (h === 'subj') return { page: 'grammar', tab: 'subj' };
   if (PAGES.includes(h)) return { page: h };
   if (OLD_HASH[h]) return { page: 'set', unit: OLD_HASH[h] };
   let m;
@@ -95,7 +95,6 @@ function Nav({ route, go }) {
     { r: { page: 'lessons' }, icon: BookOpen, label: 'Lessons', meta: Math.round((SETS.reduce((a, s) => a + lessonCounts(store, s).learned, 0) / SETS.reduce((a, s) => a + lessonCounts(store, s).total, 0)) * 100) + '%' },
     { r: { page: 'free' }, icon: Shuffle, label: 'Free practice' },
     { r: { page: 'grammar' }, icon: Table2, label: 'Grammar', meta: pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) + '%' : null },
-    { r: { page: 'subj' }, icon: Feather, label: 'Subjunctive' },
     { r: { page: 'trouble' }, icon: Target, label: 'Trouble words', badge: trouble || null, warm: true },
     { r: { page: 'mock' }, icon: Timer, label: 'Mock quiz' },
   ];
@@ -161,8 +160,7 @@ function App() {
               {route.page === 'lessons' && <Lessons store={store} go={go} />}
               {route.page === 'backup' && <Backup store={store} />}
               {route.page === 'free' && <Free key={(route.lessons || []).join(',')} store={store} go={go} initial={route.lessons} />}
-              {route.page === 'subj' && <Subjunctive store={store} />}
-              {route.page === 'grammar' && <Grammar store={store} initialTopic={route.topic} />}
+              {route.page === 'grammar' && <Grammar store={store} initialTopic={route.topic} initialTab={route.tab} />}
               {route.page === 'trouble' && <Trouble store={store} go={go} />}
               {route.page === 'mock' && <Mock key={route.scope || 'm'} store={store} go={go} scope={route.scope} />}
             </motion.div>

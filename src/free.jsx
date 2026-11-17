@@ -1,39 +1,11 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowRight, RotateCcw } from 'lucide-react';
-import { Btn, Panel, cx, SPRING } from './ui.jsx';
+import { Btn, Panel, Choice, Legend, cx } from './ui.jsx';
 import { Session, Summary } from './study.jsx';
 import { LESSON_NUMS, TNAME, FREE_DEFAULT, freePool, freeCounts, freeBatch } from './model.js';
 import { upcoming, nextAssessment, dateOf } from './course.js';
 import { lessonText } from './mock.jsx';
 import { GROUPS } from './grammar.jsx';
-
-// A small underlined choice, like the grammar page's "One form / Whole table".
-export function Choice({ id, value, onChange, options, label }) {
-  return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap items-baseline gap-x-4 gap-y-2 text-[15px]">
-      {options.map(([k, l]) => (
-        <button key={k} type="button" role="radio" aria-checked={value === k} onClick={() => onChange(k)}
-          className={cx('relative pb-1', value === k ? 'font-semibold text-ink' : 'font-medium text-muted hover:text-ink')}>
-          {l}
-          {value === k && <motion.span layoutId={id} className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-accent" transition={SPRING} />}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function Legend({ num, children, aside }) {
-  return (
-    <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-1.5">
-      <p className="flex items-baseline gap-2">
-        <span className="font-serif text-[15px] text-accent">{num}</span>
-        <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">{children}</span>
-      </p>
-      {aside}
-    </div>
-  );
-}
 
 const DIRS = [['mixed', 'Mixed'], ['le', 'Latin → English'], ['el', 'English → Latin'], ['fm', 'Forms & gender']];
 const DIR_TEXT = {

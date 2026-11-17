@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown } from 'lucide-react';
-import { Btn, Chip, Panel, Tabs, cx, EASE, SPRING } from './ui.jsx';
+import { Btn, Chip, Panel, Tabs, Choice, cx, EASE, SPRING } from './ui.jsx';
+import { Subjunctive } from './subjpage.jsx';
 import { Session } from './study.jsx';
-import { G, G_RULE, TOPICS, TNAME, grammarQ, topicPct } from './model.js';
+import { G, G_RULE, TOPICS, TNAME, grammarQ, topicPct, weakTopics } from './model.js';
 
 // The topic list reads like a book's table of contents, grouped the way the chapters are.
 export const GROUPS = [
@@ -12,14 +13,39 @@ export const GROUPS = [
   ['III', 'Subjunctive', ['subj', 'clause', 'seq']],
 ];
 
-export function Grammar({ store, initialTopic }) {
+const SUBJ_ID = 'subj';
+const NAME_HERE = { subj: 'Subjunctive forms' };
+
+// A topic row: tap to drill it. The bar is the score over the last 20 answers.
+function TopicRow({ name, pct, onClick, hint }) {
+  const tone = pct == null ? 'bg-line' : pct >= 80 ? 'bg-good' : pct >= 50 ? 'bg-muted/60' : 'bg-warm';
+  return (
+    <motion.button type="button" whileTap={{ scale: 0.985 }} onClick={onClick}
+      className="group -mx-2.5 flex items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-sunken">
+      <span className="min-w-0 flex-1">
+        <span className="block font-serif text-[16.5px] leading-tight">{name}</span>
+        {hint && <span className="block text-xs text-muted">{hint}</span>}
+      </span>
+      <span aria-hidden="true" className="h-1.5 w-8 shrink-0 overflow-hidden rounded-full bg-line">
+        <span className={cx('block h-full rounded-full', tone)} style={{ width: (pct == null ? 0 : Math.max(pct, 6)) + '%' }} />
+      </span>
+      <span className={cx('w-8 shrink-0 text-right text-[13px] font-semibold tabular', pct == null ? 'text-muted/60' : pct >= 80 ? 'text-good' : pct >= 50 ? 'text-muted' : 'text-warm')}>{pct == null ? 'new' : pct + '%'}</span>
+      <ArrowRight size={15} aria-hidden="true" className="shrink-0 text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+    </motion.button>
+  );
+}
+
+export function Grammar({ store, initialTopic, initialTab }) {
   const gram = store.get('grammar');
-  const [tab, setTab] = useState('drill');
-  const [topics, setTopics] = useState(() => (initialTopic ? [initialTopic] : gram.topics && gram.topics.length ? gram.topics : TOPICS.map((t) => t[0])));
+  const startTab = initialTab === 'subj' || initialTopic === SUBJ_ID ? 'subj' : 'drill';
+  const [tab, setTab] = useState(startTab);
+  const [topics, setTopics] = useState(() => (initialTopic && initialTopic !== SUBJ_ID ? [initialTopic] : TOPICS.map((t) => t[0])));
   const [mode, setMode] = useState(gram.mode || 'one');
-  const [running, setRunning] = useState(false);
-  const saveSel = (t, m) => store.update('grammar', (g) => { g.topics = t; g.mode = m; });
+  const [running, setRunning] = useState(() => !!initialTopic && initialTopic !== SUBJ_ID);
   const gen = (n) => Array.from({ length: n }, () => { const t = topics[Math.floor(Math.random() * topics.length)]; return { kind: 'gram', q: grammarQ(t, mode), topic: t, key: 'g' + Math.random() }; });
+  const start = (list) => { setTopics(list); store.update('grammar', (g) => { g.topics = list; g.mode = mode; }); setRunning(true); };
+  const all = TOPICS.map((t) => t[0]);
+  const weakest = weakTopics(gram, 3);
 
   return (
     <div className="flex flex-col gap-6">
@@ -28,59 +54,41 @@ export function Grammar({ store, initialTopic }) {
           <p className="text-[13px] font-semibold uppercase tracking-wider text-accent">Forms & paradigms · every answer shows its rule</p>
           <h1 className="font-serif text-[40px] font-medium leading-none tracking-tight">Grammar</h1>
         </div>
-        <Tabs id="gram" value={tab} onChange={(t) => { setTab(t); setRunning(false); }} tabs={[['drill', 'Drill'], ['ref', 'Rules & tables']]} />
+        <Tabs id="gram" value={tab} onChange={(t) => { setTab(t); setRunning(false); }} tabs={[['drill', 'Drill'], ['subj', 'Subjunctive'], ['ref', 'Rules & tables']]} />
       </header>
       <AnimatePresence mode="wait">
         <motion.div key={tab + running} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: EASE }}>
-          {tab === 'ref' ? <Reference /> : running ? (
+          {tab === 'ref' ? <Reference /> : tab === 'subj' ? <Subjunctive store={store} embedded /> : running ? (
             <Session store={store} items={gen(4)} more={() => gen(3)} title={topics.length === 1 ? TNAME[topics[0]] : 'Mixed grammar'} onExit={() => setRunning(false)} />
           ) : (
-            <Panel className="flex flex-col gap-5 p-6">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="font-serif text-[26px] font-medium leading-none tracking-tight">Contents</h2>
-                  <button type="button" className="text-sm font-semibold text-accent" onClick={() => { const t = topics.length === TOPICS.length ? [] : TOPICS.map((x) => x[0]); setTopics(t); saveSel(t, mode); }}>
-                    {topics.length === TOPICS.length ? 'Clear all' : 'Select all'}
-                  </button>
-                </div>
-                <div className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
-                  {GROUPS.map(([num, name, ids]) => (
-                    <div key={name} className="flex min-w-0 flex-col">
-                      <p className="mb-1.5 flex items-baseline gap-2 border-b border-line pb-1.5">
-                        <span className="font-serif text-[15px] text-accent">{num}</span>
-                        <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">{name}</span>
-                      </p>
-                      {ids.map((id) => {
-                        const on = topics.includes(id), p = topicPct(gram, id);
-                        return (
-                          <motion.button key={id} type="button" whileTap={{ scale: 0.985 }} aria-pressed={on}
-                            onClick={() => { const t = on ? topics.filter((x) => x !== id) : topics.concat(id); setTopics(t); saveSel(t, mode); }}
-                            className="group -mx-1.5 flex items-baseline gap-2 rounded-md px-1.5 py-1.5 text-left hover:bg-sunken">
-                            <span aria-hidden="true" className={cx('relative top-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[3px] border transition-colors', on ? 'border-accent bg-accent text-accent-ink' : 'border-muted/50')}>
-                              {on && <motion.svg viewBox="0 0 12 12" className="h-[11px] w-[11px]" initial={false}><motion.path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.22, ease: EASE }} /></motion.svg>}
-                            </span>
-                            <span className={cx('whitespace-nowrap font-serif text-[16.5px] transition-colors', on ? 'text-ink' : 'text-muted group-hover:text-ink')}>{TNAME[id]}</span>
-                            <span aria-hidden="true" className="min-w-[12px] flex-1 translate-y-[-3px] border-b border-dotted border-muted/40" />
-                            <span className={cx('text-[13px] font-semibold tabular', p == null ? 'text-muted/60' : p >= 80 ? 'text-good' : p >= 50 ? 'text-muted' : 'text-warm')}>{p == null ? '—' : p + '%'}</span>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted">Tick what to mix together. The figure is your score over your last 20 answers on that topic.</p>
+            <Panel className="flex flex-col gap-6 p-6">
+              <div className="flex flex-col gap-1">
+                <h2 className="font-serif text-[26px] font-medium leading-none tracking-tight">Pick what to drill</h2>
+                <p className="text-sm text-muted">Tap a topic to start. The bar is your score over your last 20 answers on it.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div role="radiogroup" aria-label="Answer as" className="flex items-baseline gap-4 text-[15px]">
-                  {[['one', 'One form'], ['table', 'Whole table']].map(([k, l]) => (
-                    <button key={k} type="button" role="radio" aria-checked={mode === k} onClick={() => { setMode(k); saveSel(topics, k); }}
-                      className={cx('relative pb-1', mode === k ? 'font-semibold text-ink' : 'font-medium text-muted hover:text-ink')}>
-                      {l}
-                      {mode === k && <motion.span layoutId="gram-mode" className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-accent" transition={SPRING} />}
-                    </button>
-                  ))}
+
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <Btn variant="primary" size="lg" onClick={() => start(all)}>Mix everything <ArrowRight size={18} /></Btn>
+                <Btn size="lg" onClick={() => start(weakest)} title={weakest.map((t) => TNAME[t]).join(', ')}>Weakest three first</Btn>
+                <div className="flex items-baseline gap-3 sm:ml-auto">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">Answer as</span>
+                  <Choice id="gram-mode" label="Answer as" value={mode} onChange={setMode} options={[['one', 'One form'], ['table', 'Whole table']]} />
                 </div>
-                <Btn variant="primary" size="lg" disabled={!topics.length} onClick={() => setRunning(true)}>Start drilling <ArrowRight size={18} /></Btn>
+              </div>
+
+              <div className="grid gap-x-10 gap-y-6 sm:grid-cols-3">
+                {GROUPS.map(([num, name, ids]) => (
+                  <div key={name} className="flex min-w-0 flex-col">
+                    <p className="mb-1 flex items-baseline gap-2 border-b border-line pb-1.5">
+                      <span className="font-serif text-[15px] text-accent">{num}</span>
+                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">{name}</span>
+                      <button type="button" onClick={() => start(ids)} className="ml-auto text-xs font-semibold text-accent hover:underline">Drill all</button>
+                    </p>
+                    {ids.map((id) => id === SUBJ_ID
+                      ? <TopicRow key={id} name={NAME_HERE[id]} hint="Type the form, with a guide" pct={topicPct(gram, id)} onClick={() => { setTab('subj'); setRunning(false); }} />
+                      : <TopicRow key={id} name={TNAME[id]} pct={topicPct(gram, id)} onClick={() => start([id])} />)}
+                  </div>
+                ))}
               </div>
             </Panel>
           )}

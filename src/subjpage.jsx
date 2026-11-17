@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, Target, X } from 'lucide-react';
-import { Btn, Chip, Kbd, Panel, Field, DrawCheck, cx, EASE, SPRING } from './ui.jsx';
-import { Choice, Legend } from './free.jsx';
+import { Btn, Chip, Kbd, Panel, Field, DrawCheck, Choice, Legend, cx, EASE, SPRING } from './ui.jsx';
 import { gCheck, diagnose, grade, PATTERNS } from './model.js';
 import { SUBJ_TENSES, SUBJ_VOICES, SUBJ_VERBS, SUBJ_DEFAULT, subjQ, diagnoseIrr, IRR_GUIDE_ORDER, irregGuide } from './subj.js';
 
@@ -201,7 +200,7 @@ function Guide() {
 /* ---------- practice ---------- */
 const SETTINGS = [['Tense', 'tense', SUBJ_TENSES], ['Voice', 'voice', SUBJ_VOICES], ['Verbs', 'verbs', SUBJ_VERBS]];
 
-export function Subjunctive({ store }) {
+export function Subjunctive({ store, embedded }) {
   const [cfg, setCfg] = useState(() => ({ ...SUBJ_DEFAULT, ...(store.get('hub').subjCfg || {}) }));
   const [n, setN] = useState(0);
   const [q, setQ] = useState(() => subjQ(cfg, null));
@@ -232,10 +231,12 @@ export function Subjunctive({ store }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <p className="text-[13px] font-semibold uppercase tracking-wider text-accent">One verb, one form · type it · no macrons needed</p>
-        <h1 className="font-serif text-[40px] font-medium leading-none tracking-tight">Subjunctive</h1>
-      </header>
+      {!embedded && (
+        <header>
+          <p className="text-[13px] font-semibold uppercase tracking-wider text-accent">One verb, one form · type it · no macrons needed</p>
+          <h1 className="font-serif text-[40px] font-medium leading-none tracking-tight">Subjunctive</h1>
+        </header>
+      )}
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex min-w-0 flex-col gap-5">
           <div className="flex flex-col gap-2.5">
