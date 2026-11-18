@@ -371,7 +371,7 @@ export function buildQueue(items) {
 }
 
 /* ---------- free practice: any lessons, any direction, not limited to what is due ---------- */
-export const FREE_DEFAULT = { lessons: [], topics: [], dir: 'mixed', n: 20, unlearned: true, track: false };
+export const FREE_DEFAULT = { lessons: [], topics: [], dir: 'mixed', n: 20, unlearned: true, track: false, pos: [] };
 export function freePool(store, cfg) {
   const out = [];
   (cfg.lessons || []).forEach((n) => {
@@ -381,6 +381,7 @@ export function freePool(store, cfg) {
     set.cards.forEach((card) => {
       if ((doc.removed || {})[card.id]) return;
       if (!cfg.unlearned && !isLearned(doc, card.id)) return;
+      if (cfg.pos && cfg.pos.length && !cfg.pos.includes(card.pos)) return;
       out.push({ set, card, n });
     });
   });

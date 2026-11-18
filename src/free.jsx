@@ -14,6 +14,7 @@ const DIR_TEXT = {
   el: 'See the English, type the whole Latin entry: every form and the gender.',
   fm: 'See the first form, type the rest of the entry and the gender.',
 };
+const WORD_TYPES = { n: 'Nouns', v: 'Verbs', a: 'Adjectives', av: 'Adverbs', cj: 'Conjunctions', pp: 'Prepositions', pr: 'Pronouns', nm: 'Numbers', ph: 'Phrases' };
 const COUNTS = [[10, '10'], [20, '20'], [50, '50'], ['all', 'All'], ['endless', 'Endless']];
 
 export function Free({ store, go, initial }) {
@@ -31,6 +32,9 @@ export function Free({ store, go, initial }) {
   const set = (p) => setCfg((c) => ({ ...c, ...p }));
 
   const pool = freePool(store, cfg);
+  const byPos = {}; freePool(store, { ...cfg, pos: [] }).forEach((x) => { byPos[x.card.pos] = (byPos[x.card.pos] || 0) + 1; });
+  const posList = Object.keys(WORD_TYPES).filter((k) => byPos[k] || (cfg.pos || []).includes(k));
+  const togglePos = (k) => set({ pos: (cfg.pos || []).includes(k) ? cfg.pos.filter((x) => x !== k) : (cfg.pos || []).concat(k) });
   const counts = freeCounts(cfg, pool.length);
   const total = counts.v + counts.g;
   const canStart = cfg.n === 'endless' ? pool.length > 0 || cfg.topics.length > 0 : total > 0;
@@ -85,7 +89,21 @@ export function Free({ store, go, initial }) {
         </section>
 
         <section>
-          <Legend num="2" aside={<button type="button" className="text-[13px] font-semibold text-accent" onClick={() => set({ topics: hasGrammar ? [] : GROUPS.flatMap((g) => g[2]) })}>{hasGrammar ? 'Clear' : 'Select all'}</button>}>Grammar topics, optional</Legend>
+          <Legend num="2" aside={<span className="text-[13px] text-muted tabular">{(cfg.pos || []).length ? (cfg.pos || []).map((k) => WORD_TYPES[k].toLowerCase()).join(', ') + ' only' : 'All types'}</span>}>Word types</Legend>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" aria-pressed={!(cfg.pos || []).length} onClick={() => set({ pos: [] })}
+              className={cx('rounded-full border px-4 py-1.5 text-[15px] font-semibold', !(cfg.pos || []).length ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:text-ink')}>All</button>
+            {posList.map((k) => {
+              const on = (cfg.pos || []).includes(k);
+              return <button key={k} type="button" aria-pressed={on} onClick={() => togglePos(k)}
+                className={cx('rounded-full border px-4 py-1.5 text-[15px] font-semibold', on ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:text-ink')}>
+                {WORD_TYPES[k]} <span className="tabular font-normal opacity-70">{byPos[k] || 0}</span></button>;
+            })}
+          </div>
+        </section>
+
+        <section>
+          <Legend num="3" aside={<button type="button" className="text-[13px] font-semibold text-accent" onClick={() => set({ topics: hasGrammar ? [] : GROUPS.flatMap((g) => g[2]) })}>{hasGrammar ? 'Clear' : 'Select all'}</button>}>Grammar topics, optional</Legend>
           <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             {GROUPS.map(([num, name, ids]) => (
               <div key={name} className="min-w-0">
@@ -104,12 +122,12 @@ export function Free({ store, go, initial }) {
 
         <div className="grid gap-7 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <section>
-            <Legend num="3">Ask me</Legend>
+            <Legend num="4">Ask me</Legend>
             <Choice id="free-dir" label="Direction" value={cfg.dir} onChange={(dir) => set({ dir })} options={DIRS} />
             <p className="mt-2.5 max-w-prose text-sm text-muted">{DIR_TEXT[cfg.dir]}{hasGrammar ? ' Grammar questions are mixed in.' : ''}</p>
           </section>
           <section>
-            <Legend num="4">How many</Legend>
+            <Legend num="5">How many</Legend>
             <Choice id="free-n" label="Questions" value={cfg.n} onChange={(n) => set({ n })} options={COUNTS.map(([k, l]) => [k, l])} />
             <p className="mt-2.5 text-sm text-muted">{cfg.n === 'endless' ? 'Keeps going until you press End.' : cfg.n === 'all' ? 'Every word once.' : 'Words repeat only if you miss them.'}</p>
           </section>
