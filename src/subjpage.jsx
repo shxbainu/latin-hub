@@ -1,175 +1,84 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, Target, X } from 'lucide-react';
-import { Btn, Chip, Kbd, Panel, Field, DrawCheck, Choice, Legend, cx, EASE, SPRING } from './ui.jsx';
+import { Btn, Chip, Kbd, Panel, Field, DrawCheck, Choice, cx, EASE, SPRING } from './ui.jsx';
 import { gCheck, diagnose, grade, PATTERNS } from './model.js';
-import { SUBJ_TENSES, SUBJ_VOICES, SUBJ_VERBS, SUBJ_DEFAULT, subjQ, diagnoseIrr, IRR_GUIDE_ORDER, irregGuide } from './subj.js';
+import { SUBJ_TENSES, SUBJ_VOICES, SUBJ_VERBS, SUBJ_DEFAULT, subjQ, diagnoseIrr, irregGuide } from './subj.js';
 
 const Lat = ({ children, className }) => <span lang="la" className={cx('font-serif', className)}>{children}</span>;
 
-/* ---------- the guide, from the notebook pages ---------- */
-function Row({ left, right, sub }) {
+/* ---------- the guide ---------- */
+function Head({ n, children }) {
   return (
-    <div className="flex items-baseline gap-3 border-b border-line/70 py-1.5 last:border-b-0">
-      <p className="min-w-0 flex-1 text-[14px] leading-snug">{left}</p>
-      <p className="shrink-0 text-right text-[14px] font-semibold leading-snug text-accent">{right}{sub && <span className="block text-[12px] font-normal text-muted">{sub}</span>}</p>
+    <p className="mb-1.5 flex items-baseline gap-2 border-b border-line pb-1">
+      <span className="font-serif text-[15px] text-accent">{n}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{children}</span>
+    </p>
+  );
+}
+function Row({ left, right }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-line/70 py-1 text-[14px] last:border-b-0">
+      <span>{left}</span><span className="shrink-0 font-semibold text-accent">{right}</span>
     </div>
   );
 }
-
-function Mnemonic({ words }) {
-  // "We beat a liar": the vowel you add after the stem, one word per conjugation.
-  return (
-    <div className="grid grid-cols-4 gap-1.5 text-center">
-      {words.map(([pre, vow, post, tag]) => (
-        <div key={tag} className="rounded-lg bg-sunken px-1 py-2">
-          <p className="font-serif text-[16px] leading-none">{pre}<span className="font-semibold text-accent underline decoration-accent/40 underline-offset-[3px]">{vow}</span>{post}</p>
-          <p className="mt-1.5 text-[11px] leading-tight text-muted">{tag}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Ends({ title, ends }) {
-  return (
-    <div className="min-w-0 flex-1">
-      <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</p>
-      <div className="grid grid-cols-2 gap-x-3 font-serif text-[16px] tabular">
-        {ends.map((e, i) => <span key={i}>-{e}</span>)}
-      </div>
-    </div>
-  );
-}
-
-function Build({ title, rule, ex }) {
-  return (
-    <div className="rounded-lg border border-line p-3">
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">{title}</p>
-      <p className="mt-1.5 text-[13.5px] leading-snug">{rule}</p>
-      <Lat className="mt-1.5 block text-[17px] font-semibold text-accent">{ex}</Lat>
-    </div>
-  );
-}
-
-const SPOT = [
-  ['doceretur', 'imperfect subjunctive passive, 3rd sg., doceo'],
-  ['afficiantur', 'present subjunctive passive, 3rd pl., afficio'],
-  ['impedias', 'present subjunctive active, 2nd sg., impedio'],
-  ['caperemini', 'imperfect subjunctive passive, 2nd pl., capio'],
-  ['custodiantur', 'present subjunctive passive, 3rd pl., custodio'],
-  ['caveret', 'imperfect subjunctive active, 3rd sg., caveo'],
+// Each tense: how it is built, then the active and passive 3rd sg. of laudo.
+const BUILD = [
+  ['Present', 'stem + vowel + endings', 'laudet', 'laudetur'],
+  ['Imperfect', 'infinitive + endings', 'laudaret', 'laudaretur'],
+  ['Perfect', 'perfect stem + erim · 4th part + sim', 'laudaverit', 'laudatus sit'],
+  ['Pluperfect', 'perfect stem + issem · 4th part + essem', 'laudavisset', 'laudatus esset'],
 ];
-
-function Irregulars() {
-  const [id, setId] = useState('sum');
-  const g = irregGuide(id);
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-1.5">
-        {IRR_GUIDE_ORDER.map((x) => (
-          <button key={x} type="button" aria-pressed={x === id} onClick={() => setId(x)} lang="la"
-            className={cx('rounded-full border px-2.5 py-0.5 font-serif text-[15px]', x === id ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:text-ink')}>{x}</button>
-        ))}
-      </div>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: EASE }} className="flex flex-col gap-2">
-          <p className="text-[14px]"><Lat className="text-[17px] font-semibold">{g.parts}</Lat> <span className="text-muted">· {g.meaning}</span></p>
-          <dl className="flex flex-col">
-            {g.rows.map(([label, forms]) => (
-              <div key={label} className="grid grid-cols-[82px_minmax(0,1fr)] gap-x-2 border-b border-line/70 py-1.5 last:border-b-0">
-                <dt className="text-[12px] font-semibold leading-snug text-muted">{label}</dt>
-                <dd lang="la" className="font-serif text-[15.5px] leading-snug">{forms.join(', ')}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="text-[13px] leading-snug text-muted">{g.rule}</p>
-        </motion.div>
-      </AnimatePresence>
-      <p className="text-[12.5px] leading-snug text-muted">Compounds follow their base verb: <Lat>absum, adsum, desum, praesum</Lat> (sum) · <Lat>adeo, exeo, redeo, transeo, ineo</Lat> (eo) · <Lat>adfero, confero, infero, refero, defero</Lat> (fero).</p>
-    </div>
-  );
-}
-
-function SpotList() {
-  const [open, setOpen] = useState({});
-  return (
-    <ul className="flex flex-col">
-      {SPOT.map(([w, p]) => (
-        <li key={w} className="border-b border-line/70 last:border-b-0">
-          <button type="button" onClick={() => setOpen((o) => ({ ...o, [w]: !o[w] }))} aria-expanded={!!open[w]} className="flex w-full flex-col items-start py-1.5 text-left">
-            <Lat className="text-[17px]">{w}</Lat>
-            <AnimatePresence initial={false}>
-              {open[w] && <motion.span initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: EASE }} className="overflow-hidden text-[13px] text-muted">{p}</motion.span>}
-            </AnimatePresence>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
+const POSSUM = 'possim, possem · potuerim, potuissem';
 
 function GuideBody() {
+  const sum = irregGuide('sum');
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3.5">
       <section>
-        <Legend num="I">Which tense</Legend>
-        <Row left="Present or future main verb" right="present subjunctive" />
-        <Row left="Imperfect, perfect or pluperfect main verb" right="imperfect subjunctive" />
-      </section>
-
-      <section>
-        <Legend num="II">What sets it off</Legend>
-        <Row left="Verb of motion" right="ut / ne" sub="purpose" />
-        <Row left="Verb of commanding, persuading, encouraging" right="ut / ne" />
-        <Row left={<>Fear words, <span className="text-muted">“I’m afraid …”</span></>} right="ne" />
-        <Row left={<>Fear words, <span className="text-muted">“I’m afraid he won’t”</span></>} right="ut / ne non" />
+        <Head n="I">When</Head>
+        <Row left="Present or future main verb" right="present" />
+        <Row left="Past main verb (imperfect, perfect, pluperfect)" right="imperfect" />
+        <Row left="Motion, command, persuade, encourage" right="ut / ne" />
+        <Row left={<>Fear <Lat className="text-muted">“I’m afraid …”</Lat></>} right="ne" />
+        <Row left={<>Fear <Lat className="text-muted">“I’m afraid he won’t”</Lat></>} right="ut / ne non" />
         <Row left="Result" right="ut / ut non" />
       </section>
 
       <section>
-        <Legend num="III">Present &amp; imperfect</Legend>
-        <p className="mb-2 text-[13.5px] leading-snug text-muted">Present: stem vowel + endings. Imperfect: 2nd principal part + endings. Shown in the 1st pl.</p>
-        <div className="mb-3 overflow-hidden rounded-lg border border-line">
-          <table className="w-full text-left text-[15px]">
-            <thead><tr className="bg-sunken text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted"><th className="px-3 py-1.5">Verb</th><th className="px-3 py-1.5">Present</th><th className="px-3 py-1.5">Imperfect</th></tr></thead>
-            <tbody lang="la" className="font-serif text-[16px]">
-              {[['amo', 'amemus', 'amaremus'], ['video', 'videamus', 'videremus'], ['peto', 'petamus', 'peteremus'], ['facio', 'faciamus', 'faceremus'], ['audio', 'audiamus', 'audiremus']].map(([a, b, c]) => (
-                <tr key={a} className="border-t border-line/70"><td className="px-3 py-1">{a}</td><td className="px-3 py-1">{b}</td><td className="px-3 py-1">{c}</td></tr>
-              ))}
-            </tbody>
-          </table>
+        <Head n="II">How to build it</Head>
+        <div className="overflow-hidden rounded-lg border border-line text-[13px] leading-snug">
+          <div className="grid grid-cols-[80px_1fr_84px_112px] bg-sunken text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted">
+            <span className="px-2 py-1" /><span className="px-2 py-1">Build</span><span className="px-2 py-1">Active</span><span className="px-2 py-1">Passive</span>
+          </div>
+          {BUILD.map(([t, r, ae, pe]) => (
+            <div key={t} className="grid grid-cols-[80px_1fr_84px_112px] items-center border-t border-line/70">
+              <span className="px-2 py-1.5 font-semibold text-muted">{t}</span>
+              <span className="px-2 py-1.5">{r}</span>
+              <Lat className="px-2 py-1.5 text-[15.5px] font-semibold text-accent">{ae}</Lat>
+              <Lat className="px-2 py-1.5 text-[15.5px] font-semibold text-accent">{pe}</Lat>
+            </div>
+          ))}
         </div>
-        <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">The vowel in the present</p>
-        <div className="flex flex-col gap-1.5">
-          <Mnemonic words={[['W', 'e', '', '1st'], ['b', 'ea', 't', '2nd'], ['', 'a', '', '3rd'], ['l', 'ia', 'r', '3rd -io, 4th']]} />
-          <Mnemonic words={[['Th', 'e', '', '1st'], ['b', 'ea', 'r', '2nd'], ['gr', 'a', 'bs', '3rd'], ['Br', 'ia', 'n', '3rd -io, 4th']]} />
-        </div>
-        <p className="mt-1.5 text-[12.5px] text-muted">“We beat a liar” / “The bear grabs Brian”</p>
-        <div className="mt-4 flex gap-5">
-          <Ends title="Active" ends={['m', 'mus', 's', 'tis', 't', 'nt']} />
-          <Ends title="Passive" ends={['r', 'mur', 'ris', 'mini', 'tur', 'ntur']} />
+        <div className="mt-2 grid gap-0.5 text-[14px]">
+          <p><span className="inline-block w-[72px] text-[13px] font-semibold text-muted">Vowel</span><Lat className="text-[16px]"><b className="text-accent">e · ea · a · ia</b></Lat> <span className="text-muted">“We beat a liar”</span></p>
+          <p><span className="inline-block w-[72px] text-[13px] font-semibold text-muted">Endings</span><Lat className="text-[15.5px]">-m -s -t -mus -tis -nt</Lat></p>
+          <p><span className="inline-block w-[72px]" /><Lat className="text-[15.5px]">-r -ris -tur -mur -mini -ntur</Lat></p>
         </div>
       </section>
 
       <section>
-        <Legend num="IV">Perfect &amp; pluperfect</Legend>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Build title="Perfect active" rule={<>3rd principal part stem + <span className="whitespace-nowrap">-erim,</span> <span className="whitespace-nowrap">-eris,</span> <span className="whitespace-nowrap">-erit…</span> (same as the future perfect)</>} ex="rexerit" />
-          <Build title="Pluperfect active" rule={<>3rd principal part stem + <span className="whitespace-nowrap">-isse</span> + endings (perfect infinitive + <span className="whitespace-nowrap">-m, -s, -t…</span>)</>} ex="rexisset" />
-          <Build title="Perfect passive" rule="4th principal part + present subjunctive of sum" ex="captus sit" />
-          <Build title="Pluperfect passive" rule="4th principal part + imperfect subjunctive of sum" ex="captus esset" />
-        </div>
-      </section>
-
-      <section>
-        <Legend num="V">Irregular verbs</Legend>
-        <Irregulars />
-      </section>
-
-      <section>
-        <Legend num="VI" aside={<span className="text-[12px] text-muted">tap to parse</span>}>Spot the form</Legend>
-        <SpotList />
+        <Head n="III">sum &amp; possum</Head>
+        <dl className="text-[14px]">
+          {sum.rows.map(([label, forms]) => (
+            <div key={label} className="grid grid-cols-[72px_1fr] border-b border-line/70 py-1">
+              <dt className="text-[13px] font-semibold text-muted">{label}</dt>
+              <dd lang="la" className="font-serif text-[15.5px] leading-snug">{forms.join(', ')}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-1.5 text-[14px]"><Lat className="font-semibold">possum</Lat> = pos- / potu- + sum: <Lat className="text-[15.5px]">{POSSUM}</Lat></p>
       </section>
     </div>
   );
@@ -181,15 +90,11 @@ function Guide() {
     <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
         className="flex w-full items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-left text-[15px] font-semibold lg:hidden">
-        Guide from your notes
+        Guide
         <motion.span className="ml-auto text-muted" animate={{ rotate: open ? 180 : 0 }} transition={SPRING}><ChevronDown size={16} /></motion.span>
       </button>
       <div className={cx(open ? 'mt-3 block' : 'hidden', 'lg:mt-0 lg:block')}>
         <Panel className="p-5 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-          <div className="mb-4 hidden items-baseline justify-between lg:flex">
-            <h2 className="font-serif text-[24px] font-medium leading-none tracking-tight">Guide</h2>
-            <span className="text-[12px] text-muted">from your notes</span>
-          </div>
           <GuideBody />
         </Panel>
       </div>
