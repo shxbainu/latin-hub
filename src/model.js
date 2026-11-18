@@ -148,6 +148,23 @@ export const PERS = {
 export const TNAME = Object.fromEntries(TOPICS);
 const CASE_LAB = []; ['sg.', 'pl.'].forEach((nb) => G.CASES.forEach((c) => CASE_LAB.push(c + ' ' + nb)));
 
+const SETS_OF = {
+  pres: [['pres-a', 'impf-a', 'fut-a'], ['pres-p', 'impf-p', 'fut-p']],
+  perf: [['perf-a', 'plup-a', 'fperf-a']],
+  perfp: [['perf-p', 'plup-p', 'fperf-p']],
+  subj: [['spres-a', 'simpf-a', 'sperf-a', 'splup-a'], ['spres-p', 'simpf-p', 'sperf-p', 'splup-p']],
+};
+const tshort = (k) => G.TENSES[k].label.replace(' subjunctive', ' subj.').replace(' active', '').replace(' passive', ' pass.');
+// A whole conjugation chart: one verb, every person, all the related tenses at once.
+function chartQ(topic, vs) {
+  let v, keys;
+  do { v = pick(vs); keys = pick(SETS_OF[topic]); } while (v.np && G.TENSES[keys[0]].pass);
+  const cols = keys.map((k) => G.TENSES[k].build(v)), cells = [], labels = [];
+  G.PERSONS.forEach((p, i) => keys.forEach((k, j) => { cells.push(cols[j][i]); labels.push(p + ' ' + tshort(k)); }));
+  const rule = 'chart-' + keys.join('+');
+  G_RULE[rule] = keys.map((k) => G_RULE[k]).join(' ');
+  return { verb: v, head: v.p[0], sub: v.p.join(', ') + ' · ' + v.m, tag: G.CONJ_NAME[v.k], topic, rule, cells, labels, grid: 'tenses', cols: keys.length, ask: 'the whole chart: ' + keys.map(tshort).join(', ') };
+}
 function verbQ(v, keys, mode, extra) {
   const pool = keys.filter((k) => !(G.TENSES[k].pass && v.np));
   const tk = pick(pool);
@@ -193,6 +210,7 @@ export function grammarQ(topic, mode) {
   if (topic === 'clause') return clauseQ();
   if (topic === 'seq') return seqQ();
   const verbs = (needPass) => G.VERBS.filter((v) => !needPass || !v.np);
+  if (mode === 'table' && SETS_OF[topic]) return chartQ(topic, topic === 'perfp' ? verbs(true) : G.VERBS);
   if (topic === 'pres') return verbQ(pick(G.VERBS), PRES_KEYS, mode, { topic });
   if (topic === 'perf') return verbQ(pick(G.VERBS), PERF_KEYS, mode, { topic });
   if (topic === 'perfp') return verbQ(pick(verbs(true)), PERFP_KEYS, mode, { topic });

@@ -24,6 +24,7 @@ function RuleLine({ card }) {
 function gridClass(q, n) {
   if (!q || !q.grid) return n > 1 ? 'grid gap-3 sm:grid-cols-2' : 'grid gap-3';
   if (q.grid === 'pron') return 'grid grid-cols-3 gap-2.5';
+  if (q.grid === 'tenses') return q.cols > 3 ? 'grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid gap-3 grid-cols-1 sm:grid-cols-3';
   return 'grid grid-cols-2 gap-3';
 }
 // Show 6-person and declension tables as sg. column | pl. column.
