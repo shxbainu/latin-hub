@@ -136,7 +136,8 @@ const PERF_KEYS = ['perf-a', 'plup-a', 'fperf-a'];
 const PERFP_KEYS = ['perf-p', 'plup-p', 'fperf-p'];
 const SUBJ_KEYS = ['spres-a', 'spres-p', 'simpf-a', 'simpf-p', 'sperf-a', 'sperf-p', 'splup-a', 'splup-p'];
 export const TOPICS = [
-  ['decl', 'Noun declensions'], ['dem', 'hic, ille, is'], ['pers', 'Personal pronouns'], ['pron', 'ipse, idem, qui'], ['pres', 'Present, imperfect, future'], ['perf', 'Perfect system active'],
+  ['decl', 'Noun declensions'], ['p-hic', 'hic, haec, hoc'], ['p-ille', 'ille, illa, illud'], ['p-is', 'is, ea, id'], ['p-ipse', 'ipse, ipsa, ipsum'], ['p-idem', 'idem, eadem, idem'], ['p-qui', 'qui, quae, quod'],
+  ['p-ego', 'ego (I)'], ['p-tu', 'tu (you)'], ['p-nos', 'nos (we)'], ['p-vos', 'vos (you all)'], ['p-sui', 'sui (reflexive)'], ['pres', 'Present, imperfect, future'], ['perf', 'Perfect system active'],
   ['perfp', 'Perfect passives'], ['inf', 'Infinitives'], ['part', 'Participles'], ['subj', 'Subjunctive'], ['imp', 'Imperatives'], ['sum', 'sum & possum'],
   ['clause', 'Subjunctive clauses'], ['seq', 'Sequence of tenses'],
 ];
@@ -144,6 +145,11 @@ export const PERS = {
   ego: { title: 'ego, nos', m: 'I, we', sg: ['ego', 'mei', 'mihi', 'me', 'me'], pl: ['nos', 'nostrum|nostri', 'nobis', 'nos', 'nobis'] },
   tu: { title: 'tu, vos', m: 'you', sg: ['tu', 'tui', 'tibi', 'te', 'te'], pl: ['vos', 'vestrum|vestri', 'vobis', 'vos', 'vobis'] },
   sui: { title: 'sui (reflexive)', m: 'himself, herself, itself, themselves', sg: [null, 'sui', 'sibi', 'se|sese', 'se|sese'] },
+};
+export const PERS1 = {
+  ego: { title: 'ego · I', cases: PERS.ego.sg }, nos: { title: 'nos · we', cases: PERS.ego.pl },
+  tu: { title: 'tu · you', cases: PERS.tu.sg }, vos: { title: 'vos · you all', cases: PERS.tu.pl },
+  sui: { title: 'sui · himself, herself, themselves', cases: PERS.sui.sg },
 };
 export const TNAME = Object.fromEntries(TOPICS);
 const CASE_LAB = []; ['sg.', 'pl.'].forEach((nb) => G.CASES.forEach((c) => CASE_LAB.push(c + ' ' + nb)));
@@ -235,9 +241,9 @@ export function grammarQ(topic, mode) {
     if (mode === 'one') { const i = Math.floor(Math.random() * 6); return { ...q, cells: [cells[i]], labels: [G.PERSONS[i]], ask: G.PERSONS[i] + ' ' + what }; }
     return { ...q, cells, labels: G.PERSONS, grid: 'six', ask: what };
   }
-  if (topic === 'pron' || topic === 'dem') {
-    const pk = pick(topic === 'dem' ? ['hic', 'ille', 'is'] : ['ipse', 'idem', 'qui']), pr = G.PRON[pk], nb = pick(['sg', 'pl']), GN = ['masc.', 'fem.', 'neut.'];
-    const q = { topic, head: pr.title, sub: pr.m, tag: null, rule: topic };
+  if (topic.startsWith('p-') && G.PRON[topic.slice(2)]) {
+    const pk = topic.slice(2), pr = G.PRON[pk], nb = pick(['sg', 'pl']), GN = ['masc.', 'fem.', 'neut.'];
+    const q = { topic, head: pr.title, sub: pr.m, tag: null, rule: ['hic', 'ille', 'is'].includes(pk) ? 'dem' : 'pron' };
     if (mode === 'one') {
       let r = Math.floor(Math.random() * 5); const c = Math.floor(Math.random() * 3);
       if (r === 0 && nb === 'sg') r = 1 + Math.floor(Math.random() * 4);
@@ -248,17 +254,11 @@ export function grammarQ(topic, mode) {
     for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) { cells.push(G.pronCell(pr[nb][r][c])); labels.push(G.CASES[r].slice(0, 3) + '. ' + GN[c]); }
     return { ...q, cells, labels, grid: 'pron', ask: (nb === 'sg' ? 'singular' : 'plural') + ', all genders' };
   }
-  if (topic === 'pers') {
-    const pk = pick(['ego', 'tu', 'sui']), pr = PERS[pk], q = { topic, head: pr.title, sub: pr.m, tag: null, rule: 'pers' };
-    const lab = (r, nb) => G.CASES[r] + (pk === 'sui' ? '' : ' ' + (nb === 'sg' ? 'sg.' : 'pl.'));
-    if (mode === 'one') {
-      const nb = pk === 'sui' ? 'sg' : pick(['sg', 'pl']), r = pk === 'sui' ? 1 + Math.floor(Math.random() * 4) : Math.floor(Math.random() * 5);
-      return { ...q, cells: [G.pronCell(pr[nb][r])], labels: [lab(r, nb)], ask: lab(r, nb) };
-    }
-    if (pk === 'sui') return { ...q, cells: pr.sg.slice(1).map(G.pronCell), labels: [1, 2, 3, 4].map((r) => lab(r, 'sg')), grid: 'list', ask: 'the whole reflexive' };
-    const cells = [], labels = [];
-    ['sg', 'pl'].forEach((nb) => { for (let r = 0; r < 5; r++) { cells.push(G.pronCell(pr[nb][r])); labels.push(G.CASES[r].slice(0, 3) + '. ' + nb + '.'); } });
-    return { ...q, cells, labels, grid: 'decl', ask: 'the whole declension' };
+  if (topic.startsWith('p-') && PERS1[topic.slice(2)]) {
+    const pr = PERS1[topic.slice(2)], idx = pr.cases[0] ? [0, 1, 2, 3, 4] : [1, 2, 3, 4];
+    const q = { topic, head: pr.title, sub: null, tag: null, rule: 'pers' };
+    if (mode === 'one') { const r = pick(idx); return { ...q, cells: [G.pronCell(pr.cases[r])], labels: [G.CASES[r]], ask: G.CASES[r] }; }
+    return { ...q, cells: idx.map((r) => G.pronCell(pr.cases[r])), labels: idx.map((r) => G.CASES[r]), grid: 'list', ask: 'every case' };
   }
   return null;
 }

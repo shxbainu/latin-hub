@@ -164,7 +164,7 @@ export function StudyCard({ item, store, mode = 'practice', onDone }) {
           {item.kind === 'cloze' && 'Fill in the blank.'}
           {q && q.topic === 'clause' && 'What kind of clause is highlighted?'}
           {q && q.topic === 'seq' && <>Pick the <span className="text-accent">{q.ask}</span>.</>}
-          {q && !q.choice && <>Give the <span className="text-accent">{q.ask}</span>.</>}
+          {q && !q.choice && <>Give the <span className="text-accent">{q.ask.replace(/\.$/, "")}</span>.</>}
         </p>
       </div>
 
@@ -281,7 +281,7 @@ const cardVariants = {
     : { opacity: 0, y: 34, scale: 0.94, transition: { duration: 0.28, ease: EASE } }),
 };
 
-export function Session({ store, items, title, onExit, more, mode = 'practice', onFinish, emptyText, noSummary, header }) {
+export function Session({ store, items, title, onExit, more, mode = 'practice', onFinish, emptyText, noSummary, header, onCurrent }) {
   const [queue, setQueue] = useState(items);
   const [n, setN] = useState(0);
   const [dir, setDir] = useState('ok');
@@ -301,6 +301,7 @@ export function Session({ store, items, title, onExit, more, mode = 'practice', 
     });
     setN((x) => x + 1);
   }
+  useEffect(() => { if (cur && onCurrent) onCurrent(cur); }, [cur && cur.key]);
   useEffect(() => { if (!cur && onFinish) onFinish(log, Date.now() - start.current); }, [cur]);
 
   const right = log.filter((r) => r.ok).length;

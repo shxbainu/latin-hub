@@ -86,7 +86,7 @@ export function Free({ store, go, initial }) {
 
         <section>
           <Legend num="2" aside={<button type="button" className="text-[13px] font-semibold text-accent" onClick={() => set({ topics: hasGrammar ? [] : GROUPS.flatMap((g) => g[2]) })}>{hasGrammar ? 'Clear' : 'Select all'}</button>}>Grammar topics, optional</Legend>
-          <div className="grid gap-x-8 gap-y-3 sm:grid-cols-3">
+          <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             {GROUPS.map(([num, name, ids]) => (
               <div key={name} className="min-w-0">
                 <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted"><span className="mr-1.5 font-serif text-[13px] normal-case tracking-normal text-accent">{num}</span>{name}</p>
