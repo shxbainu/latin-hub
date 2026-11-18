@@ -4,11 +4,11 @@ import { ArrowRight, ChevronDown } from 'lucide-react';
 import { Btn, Chip, Panel, Tabs, Choice, cx, EASE, SPRING } from './ui.jsx';
 import { Subjunctive } from './subjpage.jsx';
 import { Session } from './study.jsx';
-import { G, G_RULE, TOPICS, TNAME, grammarQ, topicPct, weakTopics } from './model.js';
+import { G, G_RULE, PERS, TOPICS, TNAME, grammarQ, topicPct, weakTopics } from './model.js';
 
 // The topic list reads like a book's table of contents, grouped the way the chapters are.
 export const GROUPS = [
-  ['I', 'Nouns', ['decl', 'pron']],
+  ['I', 'Nouns & pronouns', ['decl', 'dem', 'pers', 'pron']],
   ['II', 'Verbs', ['pres', 'perf', 'perfp', 'inf', 'part', 'imp', 'sum']],
   ['III', 'Subjunctive', ['subj', 'clause', 'seq']],
 ];
@@ -169,8 +169,12 @@ function Reference() {
         <Picker id="rn" label="Show it for" value={noun} onChange={setNoun} options={G.NOUNS.map((x) => [x.id, x.nom + ' (' + G.DECL_NAME[x.d] + ')'])} />
         <Table head={['', 'singular', 'plural']} rows={G.CASES.map((c, i) => [c, n.cells[i].gold, n.cells[i + 5].gold])} />
       </RefCard>
-      <RefCard title="Pronouns">
-        <Rules lines={[G_RULE.pron, 'qui, quae, quod agrees with its antecedent in gender and number; its case comes from its own clause.']} />
+      <RefCard title="Personal pronouns">
+        <Rules lines={[G_RULE.pers]} />
+        <Table head={['', 'ego', 'nos', 'tu', 'vos', 'sui']} rows={G.CASES.map((c, i) => [c, PERS.ego.sg[i], PERS.ego.pl[i], PERS.tu.sg[i], PERS.tu.pl[i], PERS.sui.sg[i] || '—'].map((x, j) => (j && x ? x.split('|').join(' / ') : x)))} />
+      </RefCard>
+      <RefCard title="Pronouns: hic, ille, is, ipse, idem, qui">
+        <Rules lines={[G_RULE.dem, G_RULE.pron, 'qui, quae, quod agrees with its antecedent in gender and number; its case comes from its own clause.']} />
         <Picker id="rp" label="Show" value={pron} onChange={setPron} options={Object.keys(G.PRON).map((k) => [k, G.PRON[k].title])} />
         {['sg', 'pl'].map((nb) => <Table key={nb} head={[nb === 'sg' ? 'singular' : 'plural', 'masc.', 'fem.', 'neut.']} rows={G.CASES.map((c, i) => [c].concat(G.PRON[pron][nb][i].map((x) => x.split('|').join(' / '))))} />)}
       </RefCard>

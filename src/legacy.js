@@ -810,6 +810,8 @@ var G_RULE = {
   sum: 'sum and possum: possum = pot- + sum, written pos- before s (possum, possumus, possunt). Perfect fui, potui. Subjunctive sim, possim; imperfect subjunctive essem, possem.',
   decl: 'Learn the genitive singular: it tells you the declension. -ae 1st, -i 2nd, -is 3rd, -us 4th, -ei 5th. Neuters: nom. = acc., plural ends in -a.',
   i3: 'i-stems (gen. pl. -ium): same syllable count in nom. and gen. (orbis, orbis) or a one-syllable nom. ending in two consonants (mens, mentis). Neuters in -e, -al, -ar: abl. -i, pl. -ia (mare, mari, maria).',
+  dem: 'hic = this (near me), ille = that (over there), is = this / that, or he, she, it. Genitive singular -ius in every gender (huius, illius, eius), dative -i (huic, illi, ei). Neuter nom. = acc.: hoc, illud, id; plural haec, illa, ea. Only hic changes its stem: hunc, hanc, hoc.',
+  pers: 'ego and tu: mei / tui, mihi / tibi, me / te (acc. = abl.). Plural nos / vos, dative = ablative nobis / vobis. "Of us / of you" is nostrum / vestrum (a part of) or nostri / vestri (love of). Reflexive sui, sibi, se has no nominative, is the same in both numbers and points back to the subject. With cum: mecum, tecum, nobiscum, vobiscum, secum.',
   pron: 'Pronoun genitive singular is -ius, dative singular -i, in every gender (eius, huius, illius, ipsius, cuius; ei, huic, illi, ipsi, cui).',
 };
 
